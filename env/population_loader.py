@@ -86,10 +86,16 @@ class PopulationLoader:
         total_area = pop_data.sum()
         if total_area > 0:
             pop_data = pop_data * (desired_total / total_area)
+        
+        # Replace NaN values with 0
+        pop_data = np.nan_to_num(pop_data, nan=0.0)
             
         self.population_grid = pop_data
         print(f"  Crop shape : {pop_data.shape}")
-        print(f"  Total population in bbox : {int(pop_data.sum()):,}")
+        total_pop = pop_data.sum()
+        if np.isnan(total_pop):
+            total_pop = 0
+        print(f"  Total population in bbox : {int(total_pop):,}")
         
         return self.population_grid
 

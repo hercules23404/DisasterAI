@@ -147,8 +147,10 @@ class DisasterEnvironment:
         else:
             self.incident_manager.spawn_random_incidents(num_incidents)
 
-        # Assign actual road nodes to incidents
+        # Assign actual road nodes to incidents and initialize spawn times
         self.patch_incident_nodes(self.incident_manager.incidents)
+        for inc in self.incident_manager.incidents:
+            inc.spawn_time = 0  # Initial victims spawn at time 0
 
         # ── Pre-disaster resource staging ──────────────────────
         self.units = []
@@ -188,6 +190,14 @@ class DisasterEnvironment:
 
         self.time_step = 0
         self.total_reward = 0
+        
+        # Event tracking for dashboard
+        self.event_log = []
+        self.decision_events = {
+            "reroutes": 0,
+            "preemptive_dispatches": 0,
+            "cluster_dispatches": 0
+        }
 
     # ------------------------------------------------------------------ #
     #  Initialization helpers
@@ -473,6 +483,12 @@ class DisasterEnvironment:
                     events['flooded_traversals'] += 1
 
                 if path_blocked:
+                    # Log reroute decision
+                    if future_flooded and not current_flooded:
+                        self.log_reroute(unit.id, "predicted flooding on route")
+                    else:
+                        self.log_reroute(unit.id, "current flooding detected")
+                    
                     # Reroute using predicted flood state
                     new_path_nodes = route_predictive(
                         self.road_graph, unit.node_id, unit.target_incident.node_id,
@@ -497,6 +513,12 @@ class DisasterEnvironment:
 
                 if reached:
                     if unit.target_incident:
+                        # Calculate response time
+                        response_time = self.time_step - unit.target_incident.spawn_time if hasattr(unit.target_incident, 'spawn_time') else self.time_step
+                        
+                        # Log rescue completion
+                        self.log_rescue_complete(unit.id, unit.target_incident.id, response_time)
+                        
                         unit.target_incident.resolve()
                         # Track rescue event with composite risk
                         composite_risk = self.risk_scores.get(unit.target_incident.id, 0.5)
@@ -522,6 +544,8 @@ class DisasterEnvironment:
         for inc in self.incident_manager.get_active_incidents():
             if inc.health <= 0.0:
                 events['deaths'] += 1
+                # Log casualty
+                self.log_casualty(inc.id, "health depleted")
                 inc.mark_dead()  # Mark as dead (distinct from rescued)
 
         self.time_step += 1
@@ -571,8 +595,15 @@ class DisasterEnvironment:
                     estimated_people=max(1, int(self.population_grid[r, c]) if self.population_grid is not None else 1)
                 )
                 self.incident_manager.incidents.append(inc)
+                inc.spawn_time = self.time_step  # Track when victim spawned
                 self.incident_manager.id_counter += 1
                 self.patch_incident_nodes([inc])
+                
+                # Log new distress signal
+                lat, lon = self.grid_to_latlon(r, c) if self.transform else (0, 0)
+                location = f"({lat:.4f}, {lon:.4f})"
+                self.log_distress_signal(inc.id, location, inc.risk_level)
+                
                 new_spawns += 1
 
     # ------------------------------------------------------------------ #
@@ -654,3 +685,57 @@ class DisasterEnvironment:
             info["people_in_danger"] = people_in_danger
             info["people_rescued"] = people_rescued
         return info
+    
+    # ------------------------------------------------------------------ #
+    #  Event logging for dashboard
+    # ------------------------------------------------------------------ #
+    
+    def log_event(self, event_type, message, **kwargs):
+        """Log an event for the dashboard event feed."""
+        event = {
+            "step": self.time_step,
+            "type": event_type,
+            "message": message,
+            **kwargs
+        }
+        self.event_log.append(event)
+    
+    def log_distress_signal(self, victim_id, location, risk_level):
+        """Log a new distress signal."""
+        risk_label = "CRITICAL" if risk_level > 0.9 else ("HIGH" if risk_level > 0.7 else ("MEDIUM" if risk_level > 0.3 else "LOW"))
+        self.log_event("distress", f"Distress signal #{victim_id}, {location}. Risk: {risk_label}", 
+                      victim_id=victim_id, risk_level=risk_level)
+    
+    def log_dispatch(self, unit_id, victim_id, eta_steps, is_preemptive=False):
+        """Log a unit dispatch."""
+        if is_preemptive:
+            self.decision_events["preemptive_dispatches"] += 1
+            self.log_event("dispatch", f"Unit {unit_id} dispatched to Victim #{victim_id}. ETA {eta_steps} min (Preemptive)", 
+                          unit_id=unit_id, victim_id=victim_id, eta=eta_steps, highlight=True)
+        else:
+            self.log_event("dispatch", f"Unit {unit_id} dispatched to Victim #{victim_id}. ETA {eta_steps} min", 
+                          unit_id=unit_id, victim_id=victim_id, eta=eta_steps)
+    
+    def log_reroute(self, unit_id, reason="predicted flooding on route"):
+        """Log a smart reroute decision."""
+        self.decision_events["reroutes"] += 1
+        self.log_event("reroute", f"🧠 SMART REROUTE: Unit {unit_id} diverted — {reason}", 
+                      unit_id=unit_id, highlight=True)
+    
+    def log_rescue_complete(self, unit_id, victim_id, response_time_steps):
+        """Log a successful rescue."""
+        self.log_event("rescue", f"✅ Rescue complete: Unit {unit_id} saved Victim #{victim_id} (Response: {response_time_steps} min)", 
+                      unit_id=unit_id, victim_id=victim_id, response_time=response_time_steps)
+    
+    def log_casualty(self, victim_id, reason="health depleted"):
+        """Log a casualty."""
+        self.log_event("casualty", f"☠️ Casualty: Victim #{victim_id} — {reason}", 
+                      victim_id=victim_id)
+    
+    def get_event_log(self):
+        """Get all logged events."""
+        return self.event_log
+    
+    def get_decision_summary(self):
+        """Get summary of smart decisions made."""
+        return self.decision_events
