@@ -26,6 +26,8 @@ ENV/
 cache/
 graphify-out/
 *.json.bak
+archive/
+project context/
 
 # IDE & tooling
 .claude/
