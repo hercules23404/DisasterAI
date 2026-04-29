@@ -1,0 +1,97 @@
+{
+  "project": {
+    "name": "DisasterAI",
+    "full_name": "DisasterAI: A Predictive Multi-Agent Framework for Real-Time Flood Rescue Dispatch and Dynamic Resource Allocation",
+    "version": "1.0.0",
+    "status": "Production-Ready Research Prototype",
+    "last_updated": "2026-04-29",
+    "authors": [
+      {
+        "name": "Viraj Champanera",
+        "email": "vc3288@srmist.edu.in",
+        "affiliation": "SRM Institute of Science and Technology",
+        "department": "Computational Intelligence"
+      },
+      {
+        "name": "Abhinav Tripathi",
+        "email": "at6467@srmist.edu.in",
+        "affiliation": "SRM Institute of Science and Technology",
+        "department": "Computational Intelligence"
+      },
+      {
+        "name": "Dr. R Mohandas",
+        "role": "Assistant Professor",
+        "email": "mohandar1@srmist.edu.in",
+        "affiliation": "SRM Institute of Science and Technology",
+        "department": "Computational Intelligence"
+      }
+    ],
+    "location": {
+      "study_area": "Mumbai Mithi River Basin",
+      "coordinates": {
+        "lat_min": 19.04,
+        "lat_max": 19.08,
+        "lon_min": 72.84,
+        "lon_max": 72.88
+      },
+      "grid_size": "144x144",
+      "resolution": "30m per pixel"
+    }
+  },
+  "technology_stack": {
+    "language": "Python 3.9+",
+    "core_libraries": [
+      "numpy",
+      "scipy",
+      "networkx",
+      "rasterio",
+      "geopandas",
+      "osmnx"
+    ],
+    "visualization": [
+      "streamlit",
+      "plotly",
+      "folium"
+    ],
+    "ml_frameworks": [
+      "gymnasium",
+      "stable-baselines3"
+    ],
+    "data_sources": [
+      "SRTM DEM",
+      "OpenStreetMap",
+      "WorldPop",
+      "GDACS API",
+      "Open-Meteo"
+    ]
+  },
+  "key_results": {
+    "baseline_comparison": {
+      "algorithm": "Hungarian + Predictive (N=2)",
+      "mean_score": 735.8,
+      "mean_response_time_min": 19.3,
+      "improvement_vs_greedy": {
+        "score": "+217%",
+        "response_time": "37.5% faster"
+      },
+      "rescue_success_rate": "100%"
+    },
+    "optimal_lookahead": {
+      "N": 2,
+      "mean_score": 835.8,
+      "mean_response_time_min": 18.9
+    }
+  },
+  "documentation": {
+    "human_readable": "context/",
+    "ai_optimized": "ai_context/",
+    "legacy": "docs/",
+    "research_papers": "papers/"
+  },
+  "entry_points": {
+    "dashboard": "python3 -m streamlit run dashboard.py",
+    "baseline_experiments": "python3 env/run_baselines.py",
+    "ablation_study": "python3 env/ablation.py",
+    "all_experiments": "python3 run_all_experiments.py"
+  }
+}

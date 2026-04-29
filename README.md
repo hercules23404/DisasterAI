@@ -18,10 +18,10 @@ pip install -r requirements.txt
 
 ### 2. Launch the Command Center
 
-Start the Streamlit animated dashboard to run and visualize the disaster simulation:
+Start the Streamlit dashboard to run and visualize the disaster simulation:
 
 ```bash
-python3 -m streamlit run dashboard_animated.py
+python3 -m streamlit run dashboard.py
 ```
 
 The interactive dashboard will automatically open in your default browser at `http://localhost:8501`.

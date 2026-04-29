@@ -1,0 +1,199 @@
+{
+  "architecture": {
+    "layers": [
+      {
+        "name": "Presentation Layer",
+        "components": ["dashboard.py", "dashboard_utils.py"],
+        "purpose": "Streamlit UI with Plotly/Folium rendering",
+        "technologies": ["Streamlit", "Plotly", "Folium"]
+      },
+      {
+        "name": "Orchestration Layer",
+        "components": ["env/environment.py"],
+        "purpose": "OpenAI Gym interface, step() loop",
+        "interface": "Gym-compatible"
+      },
+      {
+        "name": "Simulation Engines",
+        "components": [
+          "env/hazard_propagation.py",
+          "env/dispatch_engine.py",
+          "env/pathfinding.py"
+        ],
+        "purpose": "Core simulation logic"
+      },
+      {
+        "name": "Data Layer",
+        "components": [
+          "env/terrain_loader.py",
+          "env/population_loader.py",
+          "env/building_loader.py",
+          "env/disaster_alerts.py"
+        ],
+        "purpose": "Data ingestion and alignment"
+      }
+    ],
+    "components": [
+      {
+        "id": 1,
+        "name": "Flood Propagation Engine",
+        "file": "env/hazard_propagation.py",
+        "algorithm": "D8 Min-Heap Priority Queue",
+        "complexity": "O(n log n)",
+        "purpose": "Physically realistic water flow simulation",
+        "key_functions": ["propagate()"],
+        "performance": "15-30ms per step"
+      },
+      {
+        "id": 2,
+        "name": "Rescue Unit Dispatch Engine",
+        "file": "env/dispatch_engine.py",
+        "algorithm": "Hungarian Algorithm (scipy.optimize.linear_sum_assignment)",
+        "complexity": "O(n³)",
+        "purpose": "Globally optimal unit-to-victim assignment",
+        "cost_function": "distance + (1.0 - composite_risk) × 1000",
+        "key_functions": ["dispatch_units()"],
+        "performance": "2-5ms per step"
+      },
+      {
+        "id": 3,
+        "name": "Dynamic Pathfinding System",
+        "file": "env/pathfinding.py",
+        "algorithm": "A* Search with flood-aware edge weights",
+        "complexity": "O(E log V)",
+        "purpose": "Real-time safe-route computation",
+        "flood_threshold": "0.2m depth",
+        "key_functions": ["find_safe_path()"],
+        "performance": "5-10ms per unit"
+      },
+      {
+        "id": 4,
+        "name": "Flood Predictor",
+        "file": "env/flood_predictor.py",
+        "algorithm": "N-step forward D8 simulation",
+        "purpose": "Predict flood state at arrival time",
+        "optimal_N": 2,
+        "key_functions": ["predict_future_flood()"],
+        "performance": "50-150ms for N=2"
+      },
+      {
+        "id": 5,
+        "name": "Composite Risk Scorer",
+        "file": "env/risk_scorer.py",
+        "formula": "R = α·r_cur + β·r_pred + γ·r_time + δ·r_pop",
+        "weights": {
+          "alpha_current_flood": 0.30,
+          "beta_future_flood": 0.40,
+          "gamma_time_decay": 0.20,
+          "delta_pop_vulnerability": 0.10
+        },
+        "purpose": "Evaluate victim danger level",
+        "key_functions": ["calculate_composite_risk()"],
+        "performance": "1-2ms per step"
+      },
+      {
+        "id": 6,
+        "name": "Reward Function",
+        "file": "env/reward_function.py",
+        "formula": "R_t = rescue·(1+R_j) − time_pen·ΣR_j − flood_pen·n_trav − 2·rescue·n_death + preempt·n_pre",
+        "weights": {
+          "rescue_base": 100,
+          "preemptive_bonus": 50,
+          "time_penalty": 2,
+          "flood_penalty": 10,
+          "idle_penalty_factor": 0.3
+        },
+        "purpose": "MARL incentive structure",
+        "key_functions": ["calculate_step_reward()"]
+      },
+      {
+        "id": 7,
+        "name": "Pre-Positioning Module",
+        "file": "env/pre_positioning.py",
+        "algorithm": "Maximum Coverage Location Problem (MCLP)",
+        "purpose": "Optimal initial fleet placement",
+        "key_functions": ["compute_mclp_positions()"]
+      },
+      {
+        "id": 8,
+        "name": "Victim Spawn Model",
+        "file": "env/victims.py",
+        "formula": "P(spawn) ∝ pop_density × max(Δdepth/Δt, 0)",
+        "purpose": "Dynamic victim generation",
+        "key_functions": ["spawn_victims()", "update_health()"]
+      },
+      {
+        "id": 9,
+        "name": "Environment Orchestrator",
+        "file": "env/environment.py",
+        "interface": "OpenAI Gym",
+        "state_space": "6-channel H×W tensor",
+        "state_channels": [
+          "current_flood_depth",
+          "predicted_flood_depth",
+          "composite_risk_map",
+          "victim_locations",
+          "unit_locations",
+          "population_vulnerability"
+        ],
+        "key_functions": ["reset()", "step()", "get_state()"]
+      },
+      {
+        "id": 10,
+        "name": "MARL Engine & Baselines",
+        "files": ["env/rl_agent.py", "env/baselines.py", "env/run_baselines.py", "env/ablation.py"],
+        "framework": "QMIX (PyMARL)",
+        "baselines": ["Random", "Nearest-Unit", "Greedy Myopic", "Priority Queue", "Hungarian"],
+        "key_functions": ["get_dispatch_function()", "run_baseline_experiment()"]
+      },
+      {
+        "id": 11,
+        "name": "Animated Dashboard",
+        "file": "dashboard.py",
+        "framework": "Streamlit",
+        "features": ["3-tab interface", "Plotly animation", "Event logging", "Baseline comparison"],
+        "tabs": ["Operations View", "Technical View", "Comparison View"]
+      }
+    ]
+  },
+  "data_flow": {
+    "initialization": [
+      "Load DEM tiles → Crop to bbox → Compute REM",
+      "Download OSM roads → Build NetworkX graph → Align nodes to grid",
+      "Download OSM buildings → Extract centroids → Snap to pixels",
+      "Load WorldPop data → Resample to DEM resolution",
+      "Fetch GDACS alerts → Extract severity multiplier"
+    ],
+    "simulation_loop": [
+      "1. Flood Engine: Propagate water from sources",
+      "2. Flood Predictor: Run N-step lookahead",
+      "3. Victim Spawner: Check flood delta, spawn in flooded buildings",
+      "4. Risk Scorer: Update composite risk",
+      "5. Dispatch Engine: Solve Hungarian assignment",
+      "6. Pathfinding: Compute A* routes for dispatched units",
+      "7. Movement: Advance units along paths",
+      "8. Rescue Check: Units at victim location → rescue",
+      "9. Death Check: Victim health ≤ 0 → death",
+      "10. Reward Calculation: Sum all reward components",
+      "11. State Assembly: Build 6-channel tensor",
+      "12. Event Logging: Record dispatches, rescues, deaths"
+    ]
+  },
+  "performance": {
+    "per_step_timing": {
+      "flood_propagation": "15-30ms",
+      "flood_prediction_N2": "50-150ms",
+      "risk_scoring": "1-2ms",
+      "hungarian_dispatch": "2-5ms",
+      "astar_pathfinding_5units": "15ms",
+      "state_assembly": "3-5ms",
+      "visualization": "3ms",
+      "total": "50-100ms"
+    },
+    "scalability": {
+      "current": "144×144 grid, 5-10 units, 10-20 victims",
+      "tested": "256×256 grid, 20 units, 50 victims",
+      "bottleneck": "A* pathfinding (scales with road network density)"
+    }
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "experiments": {
+    "date": "2026-04-27 to 2026-04-28",
+    "total_runs": 200,
+    "hardware": {
+      "cpu": "Apple M1 Pro (8 performance cores)",
+      "ram": "16 GB",
+      "os": "macOS Sonoma"
+    },
+    "baseline_comparison": {
+      "runs_per_algorithm": 20,
+      "total_runs": 100,
+      "simulation_params": {
+        "duration_steps": 30,
+        "duration_minutes": 150,
+        "victims": 10,
+        "rescue_units": 10,
+        "grid_size": "144x144",
+        "flood_sources": 4
+      },
+      "results": {
+        "hungarian": {
+          "mean_score": 735.8,
+          "std_score": 312.5,
+          "mean_response_time_min": 19.3,
+          "std_response_time": 4.2,
+          "rescue_success_rate": 1.0,
+          "improvement_vs_greedy": {
+            "score_percent": 217,
+            "response_time_percent": -37.5
+          }
+        },
+        "greedy_myopic": {
+          "mean_score": 232.0,
+          "std_score": 246.1,
+          "mean_response_time_min": 30.9,
+          "std_response_time": 3.8,
+          "rescue_success_rate": 0.98
+        },
+        "nearest_unit": {
+          "mean_score": 193.8,
+          "std_score": 289.4,
+          "mean_response_time_min": 30.1,
+          "std_response_time": 3.6,
+          "rescue_success_rate": 0.97
+        },
+        "priority_queue": {
+          "mean_score": 23.9,
+          "std_score": 267.3,
+          "mean_response_time_min": 31.5,
+          "std_response_time": 3.2,
+          "rescue_success_rate": 0.95
+        },
+        "random": {
+          "mean_score": 8.5,
+          "std_score": 297.8,
+          "mean_response_time_min": 30.5,
+          "std_response_time": 3.5,
+          "rescue_success_rate": 0.93
+        }
+      },
+      "statistical_significance": {
+        "hungarian_vs_greedy": "p < 0.001",
+        "hungarian_vs_all_others": "p < 0.0001",
+        "cohens_d": 1.85,
+        "effect_size": "large"
+      }
+    },
+    "ablation_study": {
+      "parameter": "lookahead_horizon_N",
+      "values_tested": [1, 2, 3, 5, 7],
+      "runs_per_value": 20,
+      "total_runs": 100,
+      "results": {
+        "N1": {
+          "mean_score": 719.4,
+          "std_score": 348.2,
+          "mean_response_time_min": 19.5,
+          "std_response_time": 4.5
+        },
+        "N2": {
+          "mean_score": 835.8,
+          "std_score": 386.7,
+          "mean_response_time_min": 18.9,
+          "std_response_time": 4.1,
+          "improvement_vs_N1_percent": 16.2,
+          "optimal": true
+        },
+        "N3": {
+          "mean_score": 789.9,
+          "std_score": 459.3,
+          "mean_response_time_min": 18.8,
+          "std_response_time": 5.2,
+          "improvement_vs_N1_percent": 9.8
+        },
+        "N5": {
+          "mean_score": 740.3,
+          "std_score": 363.8,
+          "mean_response_time_min": 18.3,
+          "std_response_time": 5.1,
+          "improvement_vs_N1_percent": 2.9
+        },
+        "N7": {
+          "mean_score": 800.8,
+          "std_score": 398.5,
+          "mean_response_time_min": 19.3,
+          "std_response_time": 6.2,
+          "improvement_vs_N1_percent": 11.3
+        }
+      },
+      "key_finding": "N=2 or N=3 provides optimal balance between prediction accuracy and computational cost",
+      "diminishing_returns": "Beyond N=3, no consistent improvement due to prediction uncertainty"
+    },
+    "flood_characteristics": {
+      "peak_flood_extent_cells": 8337,
+      "peak_flood_extent_percent": 58,
+      "grid_total_cells": 20736,
+      "flood_progression": {
+        "steps_1_5": "Rapid expansion (0 → 3,000 cells)",
+        "steps_6_15": "Peak crisis (3,000 → 8,000 cells)",
+        "steps_16_30": "Plateau (8,000 → 8,337 cells)"
+      },
+      "victim_spawn_pattern": {
+        "early_phase_steps_1_10": "60%",
+        "peak_phase_steps_11_20": "30%",
+        "late_phase_steps_21_30": "10%"
+      }
+    },
+    "computational_performance": {
+      "per_step_breakdown_ms": {
+        "flood_propagation": 22,
+        "flood_prediction_N2": 18,
+        "risk_scoring": 2,
+        "hungarian_dispatch": 4,
+        "astar_pathfinding_5units": 15,
+        "state_assembly": 4,
+        "visualization": 3,
+        "total": 68
+      },
+      "scalability_tests": [
+        {
+          "grid_size": "144x144",
+          "units": 5,
+          "victims": 10,
+          "time_per_step_ms": 52
+        },
+        {
+          "grid_size": "144x144",
+          "units": 10,
+          "victims": 20,
+          "time_per_step_ms": 68
+        },
+        {
+          "grid_size": "256x256",
+          "units": 10,
+          "victims": 20,
+          "time_per_step_ms": 145
+        },
+        {
+          "grid_size": "256x256",
+          "units": 20,
+          "victims": 50,
+          "time_per_step_ms": 312
+        }
+      ],
+      "bottleneck": "A* pathfinding scales with road network density and number of active units"
+    }
+  },
+  "data_files": {
+    "baseline_comparison": {
+      "path": "results/baseline_comparison.csv",
+      "rows": 100,
+      "columns": ["run_id", "mode", "total_rescued", "mean_response_time", "peak_flood_cells", "simulation_score"]
+    },
+    "ablation_lookahead": {
+      "path": "results/ablation_lookahead.csv",
+      "rows": 100,
+      "columns": ["run_id", "N_value", "total_rescued", "mean_response_time", "peak_flood_cells", "simulation_score"]
+    },
+    "figures": {
+      "path": "results/ieee_figures/",
+      "files": [
+        "fig1_scores.png",
+        "fig2_response_time.png",
+        "fig3_ablation_scores.png",
+        "fig4_ablation_response_time.png",
+        "fig5_boxplots.png",
+        "fig6_dual_axis.png",
+        "fig7_radar.png"
+      ]
+    }
+  }
+}

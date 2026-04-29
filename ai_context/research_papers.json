@@ -1,0 +1,124 @@
+{
+  "research_foundation": {
+    "total_papers": 40,
+    "source": "IEEE Transactions Paper (2026)",
+    "local_coverage": "2/40 (5%)",
+    "categories": {
+      "flood_propagation": 12,
+      "dispatch_optimization": 8,
+      "pathfinding": 5,
+      "marl_framework": 10,
+      "pre_positioning": 3,
+      "reward_shaping": 3,
+      "risk_scoring": 5,
+      "domain_context": 2
+    },
+    "top_venues": [
+      "ICML 2024",
+      "Nature Communications",
+      "Nature Scientific Reports",
+      "Springer (OR Spectrum, Water Resources Management)",
+      "MDPI (Water, Sensors, Sustainability)"
+    ],
+    "core_papers": [
+      {
+        "ref": 3,
+        "title": "MARL with Hierarchical Coordination for Emergency Responder Stationing",
+        "venue": "ICML 2024",
+        "importance": "Highest prestige validation",
+        "local_file": null
+      },
+      {
+        "ref": 14,
+        "title": "Shortest Path Planning and Dynamic Rescue Forces Dispatching",
+        "venue": "Nature Scientific Reports, 2025",
+        "importance": "Core dispatch algorithm validation",
+        "local_file": null
+      },
+      {
+        "ref": 16,
+        "title": "Online Algorithms for Ambulance Routing with Time-Varying Conditions",
+        "venue": "OR Spectrum, Springer, 2024",
+        "importance": "Core framework for dynamic dispatch",
+        "local_file": null
+      },
+      {
+        "ref": 38,
+        "title": "Fair Prioritization of Casualties in Disaster Triage",
+        "venue": "BMC Emergency Medicine, 2021",
+        "importance": "Core reference for risk function design",
+        "local_file": null
+      },
+      {
+        "ref": 5,
+        "title": "Introduction to CTDE in Cooperative MARL",
+        "venue": "arXiv:2409.03052, 2024",
+        "importance": "CTDE framework foundation",
+        "local_file": "arXiv 2409.02246.pdf"
+      },
+      {
+        "ref": 36,
+        "title": "Anytime and Efficient Multi-Agent Coordination",
+        "venue": "SN Computer Science, Springer, 2021",
+        "importance": "Multi-agent coordination",
+        "local_file": "ACM Paper 3356395.pdf"
+      }
+    ],
+    "component_mapping": {
+      "flood_propagation": {
+        "core_algorithm": "D8 Min-Heap Priority Queue",
+        "key_papers": [8, 12, 13, 17, 18],
+        "comparison_papers": [9, 10, 11, 19]
+      },
+      "dispatch_optimization": {
+        "core_algorithm": "Hungarian Algorithm",
+        "key_papers": [14, 15, 16, 29],
+        "comparison_papers": [25]
+      },
+      "pathfinding": {
+        "core_algorithm": "A* with flood-aware weights",
+        "key_papers": [23, 24],
+        "supporting_papers": [25, 34, 35]
+      },
+      "marl_framework": {
+        "core_algorithm": "QMIX (CTDE)",
+        "key_papers": [3, 5, 6, 7],
+        "application_papers": [1, 2, 4, 36, 37]
+      },
+      "pre_positioning": {
+        "core_algorithm": "MCLP",
+        "key_papers": [20, 21],
+        "robust_optimization": [22]
+      },
+      "reward_shaping": {
+        "key_papers": [31, 32, 33]
+      },
+      "risk_scoring": {
+        "core_paper": 38,
+        "supporting_papers": [26, 27, 28, 30]
+      }
+    }
+  },
+  "key_insights": {
+    "predictive_vs_reactive": {
+      "finding": "Arrival-time-aware dispatch outperforms departure-time-aware by 20.9%",
+      "supporting_papers": [14, 16, 24]
+    },
+    "global_optimization": {
+      "finding": "Hungarian algorithm significantly outperforms greedy approaches",
+      "supporting_papers": [14, 15, 16]
+    },
+    "risk_weighted_costs": {
+      "finding": "Incorporating composite risk (especially future flood) is critical",
+      "supporting_papers": [16, 29, 38]
+    },
+    "d8_optimal_compromise": {
+      "finding": "D8 min-heap provides optimal balance between accuracy and speed",
+      "supporting_papers": [8, 12, 13]
+    },
+    "ctde_framework": {
+      "finding": "Centralized training with decentralized execution ideal for disaster response",
+      "supporting_papers": [3, 5, 6, 7]
+    }
+  }
+}
