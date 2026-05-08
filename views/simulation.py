@@ -28,62 +28,89 @@ _SIM_CSS = """
 .main .block-container { padding-top: 1.2rem; }
 
 .map-container {
-    background: rgba(10,20,45,0.6);
-    border: 1px solid rgba(0,212,255,0.18);
-    border-radius: 14px;
+    background: linear-gradient(145deg,
+        rgba(7,11,21,0.92) 0%,
+        rgba(10,16,34,0.85) 100%);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    box-shadow:
+        0 0 50px rgba(0,0,0,0.6),
+        0 0 1px rgba(0,212,255,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+    position: relative;
 }
+.map-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0,212,255,0.5),
+        rgba(167,139,250,0.4),
+        rgba(255,45,120,0.3),
+        transparent);
+    z-index: 1;
+}
+
 .map-title-bar {
     font-family: 'Fira Code', monospace;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #64748b;
-    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3d5270;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    padding: 10px 16px 6px;
-    border-bottom: 1px solid rgba(0,212,255,0.1);
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid rgba(0,212,255,0.08);
     display: flex;
     align-items: center;
     gap: 8px;
+    background: rgba(5,9,18,0.6);
 }
 .map-title-bar-dot {
-    width: 8px; height: 8px;
+    width: 7px; height: 7px;
     border-radius: 50%;
     background: #00d4ff;
-    box-shadow: 0 0 6px #00d4ff;
+    box-shadow: 0 0 8px #00d4ff, 0 0 16px rgba(0,212,255,0.4);
     display: inline-block;
+    animation: map-dot-pulse 2s ease-in-out infinite;
+}
+@keyframes map-dot-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px #00d4ff, 0 0 16px rgba(0,212,255,0.4); }
+    50%       { opacity: 0.6; box-shadow: 0 0 4px #00d4ff, 0 0 8px rgba(0,212,255,0.2); }
 }
 
 .stSegmentedControl > div {
-    background: rgba(10,20,45,0.85) !important;
-    border: 1px solid rgba(0,212,255,0.25) !important;
-    border-radius: 8px !important;
+    background: rgba(7,11,21,0.9) !important;
+    border: 1px solid rgba(0,212,255,0.2) !important;
+    border-radius: 9px !important;
 }
 
 .stButton > button {
-    border-radius: 8px !important;
+    border-radius: 9px !important;
     font-family: 'Fira Code', monospace !important;
-    font-size: 0.84rem !important;
+    font-size: 0.83rem !important;
     font-weight: 600 !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.22s ease !important;
 }
 
 .results-link-btn .stButton > button {
-    background: rgba(10,20,45,0.85) !important;
-    border: 1px solid rgba(0,212,255,0.3) !important;
-    color: #00d4ff !important;
+    background: rgba(7,11,21,0.9) !important;
+    border: 1px solid rgba(167,139,250,0.3) !important;
+    color: #a78bfa !important;
 }
 .results-link-btn .stButton > button:hover {
-    background: rgba(0,212,255,0.1) !important;
-    box-shadow: 0 0 12px rgba(0,212,255,0.25) !important;
+    background: rgba(167,139,250,0.08) !important;
+    box-shadow: 0 0 16px rgba(167,139,250,0.2) !important;
+    border-color: rgba(167,139,250,0.55) !important;
 }
 
 div[data-testid="stInfo"] {
-    background: rgba(30,111,255,0.08) !important;
-    border: 1px solid rgba(30,111,255,0.25) !important;
+    background: rgba(59,130,246,0.06) !important;
+    border: 1px solid rgba(59,130,246,0.2) !important;
     border-radius: 10px !important;
-    color: #94a3b8 !important;
+    color: #64748b !important;
     font-family: 'Fira Sans', sans-serif !important;
 }
 </style>
@@ -219,6 +246,7 @@ def _run_environment(duration_min, n_victims, n_units, algorithm_key):
     rescued    = sum(1 for i in last_frame.get("incidents", []) if i[3] and not i[6])
     deaths     = sum(1 for i in last_frame.get("incidents", []) if i[6])
     kpi_summary = {
+        "total_victims":        total_vic,
         "total_rescued":        rescued,
         "total_casualties":     deaths,
         "mean_response_time_min": last_info.get("mean_response_time", 0.0),
@@ -273,17 +301,13 @@ def _build_hud_metrics():
     frame  = frames[-1]
     kpi    = cache["kpi_summary"]
 
-    active_units = sum(
-        1 for row in frame["units"] if row[2] != "idle"
-    )
+    params = st.session_state.sim_params
     return {
-        "time_step":    f"{n}/{cache['n_steps']}",
+        "n_victims":    params["n_victims"],
+        "n_units":      params["n_units"],
         "rescued":      kpi["total_rescued"],
         "rescued_delta": None,
-        "remaining":    (
-            sum(1 for i in frame["incidents"] if not i[3] and not i[6])
-        ),
-        "active_units": active_units,
+        "time_step":    f"{n}/{cache['n_steps']}",
         "total_score":  kpi["total_score"],
     }
 
@@ -382,8 +406,19 @@ def render_simulation():
             st.rerun()
 
     with col_events:
-        events = cache["event_log"] if cache else []
-        render_event_log_popover(events, st.session_state.current_frame)
+        # Event log shows all events from the last (most recent) frame
+        # Note: Plotly animation is client-side, so we can't track which frame is playing
+        # Instead, we show all events that have occurred up to the end of the simulation
+        if cache and cache["frames"]:
+            # Get the last frame which has all accumulated events
+            last_frame = cache["frames"][-1]
+            events = last_frame.get("event_log", [])
+            current_step = last_frame.get("step", len(cache["frames"]) - 1)
+        else:
+            events = []
+            current_step = 0
+        
+        render_event_log_popover(events, current_step)
 
     with col_legend:
         render_legend_popover()

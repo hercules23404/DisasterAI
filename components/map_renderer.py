@@ -129,6 +129,18 @@ def _build_road_traces(all_edges, node_to_rc, transform, flood_depth, predicted_
 
 
 def _build_victim_traces(frame, transform):
+    """
+    Build victim marker traces with risk-based colors and health-based sizes.
+    
+    Colors are determined by _victim_marker_props() based on risk level and status:
+    - High risk (≥0.66): Red (#ff1744)
+    - Mid risk (0.33-0.66): Orange (#ff9800)
+    - Low risk (<0.33): Green (#4caf50)
+    - Rescued: Transparent green (rgba(0,230,118,0.35))
+    - Deceased: Gray (#78909c)
+    
+    Sizes scale inversely with health: 10 + (1.0 - health) × 12 pixels for active victims.
+    """
     lats, lons, colors, sizes, texts = [], [], [], [], []
 
     for row in frame["incidents"]:
@@ -144,8 +156,10 @@ def _build_victim_traces(frame, transform):
         else:
             status = "active"
 
+        # Get color and size based on risk, health, and status
         color, size = _victim_marker_props(composite_risk, health, status)
         lats.append(lat);  lons.append(lon)
+        # Colors list must contain valid CSS color strings for Plotly
         colors.append(color); sizes.append(size)
 
         risk_pct = f"{composite_risk:.0%}"
@@ -162,6 +176,7 @@ def _build_victim_traces(frame, transform):
                 f"<b>Victim #{inc_id}</b><br>Risk: {risk_pct} [{label}]<br>Health: {hp_pct}"
             )
 
+    # Plotly Scattermapbox accepts a list of colors (one per marker)
     return go.Scattermapbox(
         lat=lats, lon=lons, mode="markers",
         marker=dict(size=sizes, color=colors, opacity=1.0),
@@ -211,14 +226,21 @@ def _build_burst_traces(frame, transform):
 
     events_this_step = frame.get("event_log", [])
     current_step     = frame.get("info", {}).get("step", 0)
+    
+    # Burst visibility duration: show bursts for 3 frames after event occurs
+    BURST_DURATION_FRAMES = 3
 
     incidents_by_id = {
         row[4]: (row[0], row[1]) for row in frame["incidents"]
     }
 
     for evt in events_this_step:
-        if evt.get("step") != current_step:
+        evt_step = evt.get("step", 0)
+        
+        # Show burst if event is within visibility window
+        if not (evt_step <= current_step <= evt_step + BURST_DURATION_FRAMES):
             continue
+            
         etype = evt.get("type") or evt.get("event_type", "")
         vic_id = evt.get("victim_id") or evt.get("incident_id")
 

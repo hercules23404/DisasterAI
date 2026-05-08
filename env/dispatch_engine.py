@@ -25,36 +25,14 @@ from scipy.optimize import linear_sum_assignment
 
 
 class DispatchEngine:
-    """
-    Hungarian dispatch on composite risk scores + preemptive staging
-    for predicted future victims.
-    """
-
+   
     def __init__(self, preemptive_threshold: float = 0.3):
         self.preemptive_threshold = preemptive_threshold
 
     def dispatch(self, idle_units, victims,
                  risk_scores: dict,
                  travel_time_fn) -> list:
-        """
-        Assigns idle units to active victims using Hungarian algorithm
-        on a risk-adjusted cost matrix.
-
-        Parameters
-        ----------
-        idle_units : list
-            Rescue units with status == "idle".
-        victims : list
-            Active (unresolved) victims.
-        risk_scores : dict
-            {victim_id: composite_risk_score} from RiskScorer.
-        travel_time_fn : callable
-            (unit, victim) -> estimated travel time in steps.
-
-        Returns
-        -------
-        list of (unit, victim) assignment pairs.
-        """
+        
         if not idle_units or not victims:
             return []
 
@@ -80,28 +58,7 @@ class DispatchEngine:
                            pop_grid: np.ndarray,
                            current_victim_cells: set,
                            grid_to_latlon_fn) -> list:
-        """
-        Identifies predicted future victim zones for preemptive staging.
-
-        Scores each non-victim cell by combining predicted flood risk
-        with population density. Returns top-10 locations sorted by
-        combined score.
-
-        Parameters
-        ----------
-        predicted_depth : np.ndarray
-            Predicted flood depth grid at t+k.
-        pop_grid : np.ndarray
-            Population density grid (normalised 0–1).
-        current_victim_cells : set
-            Set of (row, col) tuples where victims already exist.
-        grid_to_latlon_fn : callable
-            (row, col) -> (lat, lon) converter.
-
-        Returns
-        -------
-        list of (lat, lon, combined_score) tuples, sorted descending.
-        """
+       
         H, W = predicted_depth.shape
         targets = []
         for r in range(H):

@@ -18,53 +18,88 @@ ALGO_CODES: dict[str, str] = {
 _SIDEBAR_CSS = """
 <style>
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #060c1a 0%, #0a1628 100%);
-    border-right: 1px solid rgba(0,212,255,0.12);
+    background: linear-gradient(180deg,
+        #050912 0%,
+        #070d1c 40%,
+        #0a1020 100%);
+    border-right: 1px solid rgba(0,212,255,0.1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.4);
 }
-section[data-testid="stSidebar"] .stSlider > div > div > div {
-    background: rgba(0,212,255,0.15) !important;
+
+/* Sidebar top accent line */
+section[data-testid="stSidebar"]::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+        #00d4ff, #3b82f6, #a78bfa, #ff2d78, #f59e0b);
+    z-index: 10;
 }
-section[data-testid="stSidebar"] .stSlider > div > div > div > div {
-    background: #00d4ff !important;
-}
+
 section[data-testid="stSidebar"] label {
-    color: #94a3b8 !important;
-    font-size: 0.82rem !important;
-    font-family: 'Fira Sans', sans-serif !important;
+    color: #3d5270 !important;
+    font-size: 0.72rem !important;
+    font-family: 'Fira Code', monospace !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.07em !important;
+    letter-spacing: 0.1em !important;
+    font-weight: 600 !important;
 }
+
 section[data-testid="stSidebar"] .stSelectbox > div > div {
-    background: rgba(10,20,45,0.9) !important;
-    border: 1px solid rgba(0,212,255,0.25) !important;
+    background: rgba(7,13,30,0.95) !important;
+    border: 1px solid rgba(0,212,255,0.18) !important;
     border-radius: 8px !important;
-    color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    font-family: 'Fira Code', monospace !important;
+    font-size: 0.85rem !important;
 }
+section[data-testid="stSidebar"] .stSelectbox > div > div:hover {
+    border-color: rgba(0,212,255,0.38) !important;
+}
+
 section[data-testid="stSidebar"] .stButton > button {
-    border-radius: 8px !important;
+    border-radius: 9px !important;
     font-family: 'Fira Code', monospace !important;
     font-weight: 600 !important;
-    letter-spacing: 0.04em !important;
-    transition: all 0.2s ease !important;
+    font-size: 0.84rem !important;
+    letter-spacing: 0.05em !important;
+    transition: all 0.22s ease !important;
 }
 section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #1e6fff 0%, #00d4ff 100%) !important;
+    background: linear-gradient(135deg,
+        #1e4fff 0%,
+        #00d4ff 50%,
+        #a78bfa 100%) !important;
     border: none !important;
-    color: #0a0f1e !important;
-    box-shadow: 0 0 20px rgba(0,212,255,0.3) !important;
+    color: #070b15 !important;
+    box-shadow: 0 0 24px rgba(0,212,255,0.28), 0 0 48px rgba(167,139,250,0.1) !important;
 }
 section[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
-    box-shadow: 0 0 30px rgba(0,212,255,0.5) !important;
+    box-shadow: 0 0 36px rgba(0,212,255,0.48), 0 0 60px rgba(167,139,250,0.18) !important;
     transform: translateY(-1px) !important;
+    filter: brightness(1.06) !important;
 }
 section[data-testid="stSidebar"] .stButton > button:not([kind="primary"]) {
-    background: rgba(10,20,45,0.85) !important;
-    border: 1px solid rgba(0,212,255,0.25) !important;
-    color: #94a3b8 !important;
+    background: rgba(7,13,30,0.9) !important;
+    border: 1px solid rgba(0,212,255,0.18) !important;
+    color: #475569 !important;
 }
 section[data-testid="stSidebar"] .stButton > button:not([kind="primary"]):hover {
-    border-color: rgba(0,212,255,0.6) !important;
+    border-color: rgba(0,212,255,0.45) !important;
     color: #00d4ff !important;
+    background: rgba(0,212,255,0.06) !important;
+}
+
+section[data-testid="stSidebar"] hr {
+    border: none !important;
+    height: 1px !important;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(0,212,255,0.12),
+        rgba(167,139,250,0.08),
+        transparent) !important;
+    margin: 0.6rem 0 !important;
 }
 </style>
 """
@@ -78,10 +113,19 @@ def render_control_panel(
 ) -> None:
     st.markdown(_SIDEBAR_CSS, unsafe_allow_html=True)
 
+    _GEAR = (
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px">'
+        '<circle cx="12" cy="12" r="3" stroke="#00d4ff" stroke-width="2"/>'
+        '<path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12'
+        'M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"'
+        ' stroke="#00d4ff" stroke-width="2" stroke-linecap="round"/>'
+        '</svg>'
+    )
     st.markdown(
-        "<h3 style='color:#00d4ff;font-family:Fira Code,monospace;"
-        "font-size:1rem;letter-spacing:0.05em;margin-bottom:4px;'>"
-        "⚙ SIMULATION CONTROLS</h3>",
+        f"<div style='font-family:Fira Code,monospace;font-size:0.82rem;"
+        f"font-weight:700;color:#00d4ff;letter-spacing:0.12em;"
+        f"text-transform:uppercase;margin-bottom:4px;'>"
+        f"{_GEAR}&nbsp; Simulation Controls</div>",
         unsafe_allow_html=True,
     )
     st.divider()
@@ -108,11 +152,13 @@ def render_control_panel(
 
     st.session_state.sim_params["scenario_preset"] = preset
 
-    # ── Sliders ──────────────────────────────────────────────────────────
-    duration = st.slider("Duration (minutes)", 5, 60,
-                         params["duration_min"], step=5)
-    victims  = st.slider("Victims",            5, 20, params["n_victims"])
-    units    = st.slider("Rescue Units",        3, 10, params["n_units"])
+    # ── Dropdowns ────────────────────────────────────────────────────────
+    duration = st.selectbox("Duration (minutes)", options=list(range(5, 65, 5)),
+                            index=list(range(5, 65, 5)).index(params["duration_min"]))
+    victims  = st.selectbox("Victims", options=list(range(5, 21)),
+                            index=list(range(5, 21)).index(params["n_victims"]))
+    units    = st.selectbox("Rescue Units", options=list(range(3, 11)),
+                            index=list(range(3, 11)).index(params["n_units"]))
 
     st.session_state.sim_params["duration_min"] = duration
     st.session_state.sim_params["n_victims"]    = victims
@@ -135,11 +181,11 @@ def render_control_panel(
 
     # ── Run / Reset ──────────────────────────────────────────────────────
     run_disabled = st.session_state.run_status == "computing"
-    if st.button("▶ Run Simulation", type="primary",
+    if st.button("Run Simulation", type="primary",
                  use_container_width=True, disabled=run_disabled):
         on_run()
 
-    if st.button("↻ Reset", use_container_width=True):
+    if st.button("Reset", use_container_width=True):
         st.session_state.sim_cache  = None
         st.session_state.run_status = "idle"
         st.rerun()
@@ -147,7 +193,7 @@ def render_control_panel(
     st.divider()
 
     # ── Live Data Sources expander ────────────────────────────────────────
-    with st.expander("📡 Live Data Sources", expanded=False):
+    with st.expander("Live Data Sources", expanded=False):
         if population_grid is not None:
             total_pop = int(population_grid.sum())
             st.success(f"WorldPop — {total_pop:,} people in area")
@@ -175,6 +221,6 @@ def render_control_panel(
     st.divider()
 
     # ── Back to Landing ──────────────────────────────────────────────────
-    if st.button("← Home", use_container_width=True):
+    if st.button("Home", use_container_width=True):
         st.session_state.page = "landing"
         st.rerun()

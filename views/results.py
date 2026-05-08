@@ -7,76 +7,103 @@ from dashboard_utils import calculate_baseline_stats, calculate_lookahead_stats
 
 _RESULTS_CSS = """
 <style>
+/* ── Caption blocks ── */
+.results-caption-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
 .results-caption-block {
-    background: linear-gradient(135deg, rgba(10,20,45,0.92) 0%, rgba(16,32,64,0.85) 100%);
-    border: 1px solid rgba(0,212,255,0.18);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin-top: 8px;
+    flex: 1;
+    background: linear-gradient(145deg,
+        rgba(10,16,34,0.97) 0%,
+        rgba(14,22,48,0.92) 100%);
+    border: 1px solid rgba(0,212,255,0.12);
+    border-radius: 14px;
+    padding: 18px 22px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.results-caption-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    border-radius: 14px 0 0 14px;
+}
+.results-caption-block-what::before {
+    background: linear-gradient(180deg, #00d4ff, #3b82f6);
+}
+.results-caption-block-why::before {
+    background: linear-gradient(180deg, #a78bfa, #ff2d78);
 }
 .results-caption-label {
     font-family: 'Fira Code', monospace;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    color: #00d4ff;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 7px;
 }
+.results-caption-block-what .results-caption-label { color: #00d4ff; }
+.results-caption-block-why .results-caption-label  { color: #a78bfa; }
 .results-caption-text {
     font-family: 'Fira Sans', sans-serif;
-    font-size: 0.9rem;
-    color: #94a3b8;
-    line-height: 1.65;
+    font-size: 0.88rem;
+    color: #64748b;
+    line-height: 1.7;
 }
 </style>
 """
 
 _PLOTLY_LAYOUT = dict(
-    paper_bgcolor="#0a0f1e",
-    plot_bgcolor="#0a1628",
-    font=dict(color="#94a3b8", family="Fira Sans, sans-serif", size=12),
-    height=420,
-    margin=dict(l=40, r=20, t=40, b=40),
+    paper_bgcolor="#070b15",
+    plot_bgcolor="#0b1322",
+    font=dict(color="#64748b", family="Fira Sans, sans-serif", size=12),
+    height=440,
+    margin=dict(l=48, r=24, t=48, b=48),
     xaxis=dict(
-        gridcolor="rgba(0,212,255,0.08)",
-        zerolinecolor="rgba(0,212,255,0.15)",
-        tickfont=dict(family="Fira Code, monospace", size=11),
+        gridcolor="rgba(0,212,255,0.06)",
+        zerolinecolor="rgba(0,212,255,0.12)",
+        tickfont=dict(family="Fira Code, monospace", size=11, color="#475569"),
+        linecolor="rgba(0,212,255,0.08)",
+        showline=True,
     ),
     yaxis=dict(
-        gridcolor="rgba(0,212,255,0.08)",
-        zerolinecolor="rgba(0,212,255,0.15)",
-        tickfont=dict(family="Fira Code, monospace", size=11),
+        gridcolor="rgba(0,212,255,0.06)",
+        zerolinecolor="rgba(0,212,255,0.12)",
+        tickfont=dict(family="Fira Code, monospace", size=11, color="#475569"),
+        linecolor="rgba(0,212,255,0.08)",
+        showline=True,
     ),
 )
 
 ALGO_COLORS = {
-    "Hungarian":    "#00d4ff",
-    "Greedy":       "#ff9800",
-    "Nearest-Unit": "#ff5722",
-    "Priority Queue": "#ff2d55",
-    "Random":       "#64748b",
+    "Hungarian":     "#00d4ff",
+    "Greedy Myopic": "#f59e0b",
+    "Nearest-Unit":  "#ff7043",
+    "Priority Queue":"#a78bfa",
+    "Random":        "#475569",
 }
 
 
 def _caption_block(what: str, why: str) -> None:
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(
-            f"<div class='results-caption-block'>"
-            f"<div class='results-caption-label'>What this shows</div>"
-            f"<div class='results-caption-text'>{what}</div>"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-    with col2:
-        st.markdown(
-            f"<div class='results-caption-block'>"
-            f"<div class='results-caption-label'>Why it matters</div>"
-            f"<div class='results-caption-text'>{why}</div>"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        f"<div class='results-caption-row'>"
+        f"<div class='results-caption-block results-caption-block-what'>"
+        f"<div class='results-caption-label'>What this shows</div>"
+        f"<div class='results-caption-text'>{what}</div>"
+        f"</div>"
+        f"<div class='results-caption-block results-caption-block-why'>"
+        f"<div class='results-caption-label'>Why it matters</div>"
+        f"<div class='results-caption-text'>{why}</div>"
+        f"</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
 
 
 def _load_baseline_df():
@@ -104,7 +131,7 @@ def render_results():
         st.title("Simulation Results")
         st.caption("Validated across 200 simulation runs · 100 baseline + 100 ablation")
     with col_back:
-        if st.button("← Back to Simulation", use_container_width=True):
+        if st.button("Back to Simulation", use_container_width=True):
             st.session_state.page = "simulation"
             st.rerun()
 
@@ -116,11 +143,11 @@ data with plain-language explanations.
 
     # ── Tabs ──────────────────────────────────────────────────────────
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "🏆 Score Comparison",
-        "⏱ Response Time",
-        "🔮 Lookahead Ablation",
-        "📦 Score Distribution",
-        "📐 Statistical Significance",
+        "Score Comparison",
+        "Response Time",
+        "Lookahead Ablation",
+        "Score Distribution",
+        "Statistical Significance",
     ])
 
     baseline_stats = calculate_baseline_stats()
@@ -138,11 +165,14 @@ data with plain-language explanations.
             go.Bar(
                 x=algorithms, y=means,
                 error_y=dict(type="data", array=stds, visible=True,
-                             color="rgba(255,255,255,0.3)", thickness=1.5),
+                             color="rgba(255,255,255,0.2)", thickness=1.5),
                 marker_color=colors,
+                marker_line_color="rgba(255,255,255,0.08)",
+                marker_line_width=1,
+                opacity=0.92,
                 text=[f"{v:.0f}" for v in means],
                 textposition="outside",
-                textfont=dict(family="Fira Code, monospace", color="#e2e8f0", size=11),
+                textfont=dict(family="Fira Code, monospace", color="#94a3b8", size=11),
             )
         ])
         layout = dict(_PLOTLY_LAYOUT)
@@ -171,11 +201,14 @@ data with plain-language explanations.
             go.Bar(
                 x=algorithms, y=resp,
                 error_y=dict(type="data", array=r_stds, visible=True,
-                             color="rgba(255,255,255,0.3)", thickness=1.5),
+                             color="rgba(255,255,255,0.2)", thickness=1.5),
                 marker_color=colors,
+                marker_line_color="rgba(255,255,255,0.08)",
+                marker_line_width=1,
+                opacity=0.92,
                 text=[f"{v:.1f} min" for v in resp],
                 textposition="outside",
-                textfont=dict(family="Fira Code, monospace", color="#e2e8f0", size=11),
+                textfont=dict(family="Fira Code, monospace", color="#94a3b8", size=11),
             )
         ])
         layout2 = dict(_PLOTLY_LAYOUT)
@@ -204,17 +237,21 @@ data with plain-language explanations.
         fig3.add_trace(go.Scatter(
             x=la_names, y=la_scores,
             mode="lines+markers", name="Score",
-            line=dict(color="#00d4ff", width=3),
-            marker=dict(size=10, color="#00d4ff",
-                        line=dict(color="#0a0f1e", width=2)),
+            line=dict(color="#00d4ff", width=2.5),
+            marker=dict(size=9, color="#00d4ff",
+                        symbol="circle",
+                        line=dict(color="#070b15", width=2)),
             yaxis="y1",
+            fill="tozeroy",
+            fillcolor="rgba(0,212,255,0.04)",
         ))
         fig3.add_trace(go.Scatter(
             x=la_names, y=la_resp,
             mode="lines+markers", name="Response Time (min)",
-            line=dict(color="#ffb300", width=3, dash="dot"),
-            marker=dict(size=10, color="#ffb300",
-                        line=dict(color="#0a0f1e", width=2)),
+            line=dict(color="#f59e0b", width=2.5, dash="dot"),
+            marker=dict(size=9, color="#f59e0b",
+                        symbol="diamond",
+                        line=dict(color="#070b15", width=2)),
             yaxis="y2",
         ))
         layout3 = dict(_PLOTLY_LAYOUT)
@@ -223,16 +260,17 @@ data with plain-language explanations.
                                           family="Fira Code, monospace"))
         base_yaxis = {k: v for k, v in _PLOTLY_LAYOUT["yaxis"].items()
                       if k not in ("tickfont",)}
-        layout3["yaxis"]  = dict(**base_yaxis, title="Score",
-                                  titlefont=dict(color="#00d4ff"),
+        layout3["yaxis"]  = dict(**base_yaxis,
+                                  title=dict(text="Score", font=dict(color="#00d4ff")),
                                   tickfont=dict(color="#00d4ff",
                                                 family="Fira Code, monospace", size=11))
         layout3["yaxis2"] = dict(
-            title="Response Time (min)",
-            titlefont=dict(color="#ffb300"),
-            tickfont=dict(color="#ffb300", family="Fira Code, monospace"),
+            title=dict(text="Response Time (min)", font=dict(color="#f59e0b")),
+            tickfont=dict(color="#f59e0b", family="Fira Code, monospace", size=11),
             overlaying="y", side="right",
-            gridcolor="rgba(255,179,0,0.06)",
+            gridcolor="rgba(245,158,11,0.05)",
+            linecolor="rgba(245,158,11,0.08)",
+            showline=True,
         )
         layout3["legend"] = dict(x=0.7, y=1.0,
                                   bgcolor="rgba(10,20,45,0.85)",
@@ -328,16 +366,19 @@ data with plain-language explanations.
             x=comp_algos, y=effect_sizes,
             name="Cohen's d (effect size)",
             marker_color=bar_colors,
+            marker_line_color="rgba(255,255,255,0.08)",
+            marker_line_width=1,
+            opacity=0.92,
             text=[f"d={d} | {p}" for d, p in zip(effect_sizes, p_val_labels)],
             textposition="outside",
-            textfont=dict(family="Fira Code, monospace", color="#e2e8f0", size=10),
+            textfont=dict(family="Fira Code, monospace", color="#94a3b8", size=10),
         ))
         fig5.add_hline(
-            y=0.8,  line_dash="dot",
-            line_color="#ffb300", opacity=0.7,
+            y=0.8, line_dash="dot",
+            line_color="#f59e0b", opacity=0.6,
             annotation_text="Large effect threshold (d=0.8)",
             annotation_position="top right",
-            annotation_font=dict(color="#ffb300", size=11,
+            annotation_font=dict(color="#f59e0b", size=11,
                                   family="Fira Code, monospace"),
         )
 

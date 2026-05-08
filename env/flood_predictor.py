@@ -24,10 +24,7 @@ import heapq
 
 
 class FloodPredictor:
-    """
-    Runs D8 min-heap propagation forward k timesteps on a copy
-    of the current flood state to produce predicted depth at t+k.
-    """
+    
 
     def __init__(self, dem: np.ndarray, injection_rate: float):
         self.dem = dem          # (H, W) elevation array
@@ -38,10 +35,7 @@ class FloodPredictor:
     def predict(self, current_depth: np.ndarray,
                 source_pixels: list,
                 k_steps: int) -> np.ndarray:
-        """
-        Returns predicted flood depth grid after k steps.
-        Does NOT mutate current_depth — operates on a copy.
-        """
+       
         depth = current_depth.copy()
         H, W = depth.shape
         heap = []
@@ -73,5 +67,5 @@ class FloodPredictor:
 
     def predict_at_eta(self, current_depth, source_pixels,
                        eta_steps: int) -> np.ndarray:
-        """Convenience wrapper — predict at unit arrival time."""
+       
         return self.predict(current_depth, source_pixels, eta_steps)

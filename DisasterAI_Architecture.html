@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DisasterAI — System Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: 40px 32px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #000;
+  }
+  .header p {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── Layer blocks ─────────────────────────────────────────── */
+  .layer {
+    border-radius: 6px;
+    padding: 16px 18px 18px;
+    border: 1.5px solid #000;
+    background: #fff;
+  }
+
+  .layer-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: #000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .layer-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #000;
+    opacity: 0.3;
+  }
+
+  /* shaded backgrounds to visually separate layers */
+  .layer-external    { background: #f9f9f9; border-style: dashed; }
+  .layer-data        { background: #f4f4f4; }
+  .layer-engines     { background: #ececec; }
+  .layer-orchestrate { background: #e4e4e4; }
+  .layer-ui          { background: #dadada; }
+
+  /* ── Component chips ─────────────────────────────────────── */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .chip {
+    border-radius: 5px;
+    padding: 9px 12px;
+    font-size: 0.78rem;
+    flex: 1 1 155px;
+    border: 1px solid #aaa;
+    background: #fff;
+  }
+  .chip-name  { font-weight: 700; margin-bottom: 3px; color: #000; }
+  .chip-algo  { font-size: 0.7rem; color: #333; margin-bottom: 2px; }
+  .chip-file  { font-size: 0.65rem; font-family: monospace; color: #666; }
+
+  /* ── Arrows between layers ───────────────────────────────── */
+  .arrow {
+    text-align: center;
+    padding: 5px 0;
+    font-size: 1.2rem;
+    color: #666;
+    line-height: 1;
+  }
+
+  /* ── Right column ─────────────────────────────────────────── */
+  .sim-loop {
+    background: #fff;
+    border: 1.5px solid #000;
+    border-radius: 6px;
+    padding: 16px 16px 18px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sim-loop h3 {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #000;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 7px;
+  }
+
+  .loop-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 6px 0;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 0.76rem;
+  }
+  .loop-step:last-child { border-bottom: none; }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    font-weight: 700;
+    background: #fff;
+    color: #000;
+  }
+
+  .step-text { color: #111; line-height: 1.4; }
+  .step-sub  { font-size: 0.66rem; color: #666; display: block; margin-top: 1px; }
+
+  /* ── State tensor box ─────────────────────────────────────── */
+  .state-box {
+    margin-top: 14px;
+    background: #f5f5f5;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    padding: 11px 13px;
+  }
+  .state-box h4 {
+    font-size: 0.65rem;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: #444;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .channel {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 0;
+    font-size: 0.71rem;
+    color: #222;
+  }
+  .ch-badge {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    border: 1px solid #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.58rem;
+    font-weight: 700;
+    background: #ddd;
+    color: #000;
+  }
+
+  /* ── Performance box ──────────────────────────────────────── */
+  .perf-box {
+    margin-top: 14px;
+    background: #f5f5f5;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    padding: 11px 13px;
+  }
+  .perf-box h4 {
+    font-size: 0.65rem;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: #444;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .perf-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px;
+    font-size: 0.71rem;
+    color: #333;
+    padding: 2px 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .perf-row:last-child {
+    border-bottom: none;
+    font-weight: 700;
+    color: #000;
+    padding-top: 5px;
+  }
+  .perf-row span:last-child { text-align: right; }
+
+  /* ── Legend ───────────────────────────────────────────────── */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 28px;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: #444;
+  }
+  .legend-swatch {
+    width: 22px;
+    height: 10px;
+    border: 1px solid #999;
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DisasterAI — System Architecture</h1>
+  <p>Multi-Agent Reinforcement Learning for Urban Flood Emergency Response &nbsp;·&nbsp; Mumbai, India</p>
+</div>
+
+<div class="main-grid">
+
+  <!-- ══════════════════════ LEFT COLUMN ══════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:6px;">
+
+    <!-- EXTERNAL DATA SOURCES -->
+    <div class="layer layer-external">
+      <div class="layer-label">External Data Sources</div>
+      <div class="chips">
+        <div class="chip">
+          <div class="chip-name">SRTM DEM Tiles</div>
+          <div class="chip-algo">30m elevation raster</div>
+          <div class="chip-file">NASA / USGS</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">OSM Road Network</div>
+          <div class="chip-algo">NetworkX road graph</div>
+          <div class="chip-file">OpenStreetMap via OSMnx</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">OSM Buildings</div>
+          <div class="chip-algo">Footprint centroids</div>
+          <div class="chip-file">OpenStreetMap</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">GDACS Alerts</div>
+          <div class="chip-algo">Real-time severity API</div>
+          <div class="chip-file">disaster_alerts.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">WorldPop</div>
+          <div class="chip-algo">Population density grid</div>
+          <div class="chip-file">population_loader.py</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- DATA LAYER -->
+    <div class="layer layer-data">
+      <div class="layer-label">Data &amp; Geospatial Layer</div>
+      <div class="chips">
+        <div class="chip">
+          <div class="chip-name">Terrain Loader</div>
+          <div class="chip-algo">DEM → REM, KDTree node alignment</div>
+          <div class="chip-file">env/terrain_loader.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Population Loader</div>
+          <div class="chip-algo">Building-floor-area proxy (Wardrop 2018)</div>
+          <div class="chip-file">env/population_loader.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Building Loader</div>
+          <div class="chip-algo">OSM footprints → raster snap</div>
+          <div class="chip-file">env/building_loader.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Disaster Alerts</div>
+          <div class="chip-algo">GDACS severity multiplier</div>
+          <div class="chip-file">env/disaster_alerts.py</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- SIMULATION ENGINES -->
+    <div class="layer layer-engines">
+      <div class="layer-label">Simulation Engines</div>
+      <div class="chips">
+        <div class="chip">
+          <div class="chip-name">Flood Propagation</div>
+          <div class="chip-algo">D8 Min-Heap · O(n log n)</div>
+          <div class="chip-file">env/hazard_propagation.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Flood Predictor</div>
+          <div class="chip-algo">N-step lookahead (optimal N=2)</div>
+          <div class="chip-file">env/flood_predictor.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Dispatch Engine</div>
+          <div class="chip-algo">Hungarian Algorithm · O(n³)</div>
+          <div class="chip-file">env/dispatch_engine.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Pathfinding Engine</div>
+          <div class="chip-algo">A* with flood-aware weights</div>
+          <div class="chip-file">env/pathfinding.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Composite Risk Scorer</div>
+          <div class="chip-algo">R = 0.3·cur + 0.4·pred + 0.2·time + 0.1·pop</div>
+          <div class="chip-file">env/risk_scorer.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Pre-positioning (MCLP)</div>
+          <div class="chip-algo">Max Coverage Location Problem</div>
+          <div class="chip-file">env/pre_positioning.py</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- ORCHESTRATION -->
+    <div class="layer layer-orchestrate">
+      <div class="layer-label">Orchestration &amp; Learning Layer</div>
+      <div class="chips">
+        <div class="chip">
+          <div class="chip-name">Environment Orchestrator</div>
+          <div class="chip-algo">OpenAI Gym · step() / reset()</div>
+          <div class="chip-file">env/environment.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">MARL Agent (QMIX)</div>
+          <div class="chip-algo">Cooperative multi-agent RL</div>
+          <div class="chip-file">env/rl_agent.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Reward Function</div>
+          <div class="chip-algo">Rescue + Preempt − Time − Death − Idle</div>
+          <div class="chip-file">env/reward_function.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Victim Spawner</div>
+          <div class="chip-algo">P(spawn) ∝ pop × Δdepth/Δt</div>
+          <div class="chip-file">env/victims.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Baselines &amp; Ablation</div>
+          <div class="chip-algo">Random / Nearest / Greedy / PQ / Hungarian</div>
+          <div class="chip-file">env/baselines.py · ablation.py</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <!-- PRESENTATION -->
+    <div class="layer layer-ui">
+      <div class="layer-label">Presentation Layer</div>
+      <div class="chips">
+        <div class="chip" style="flex:2 1 280px">
+          <div class="chip-name">Streamlit Dashboard</div>
+          <div class="chip-algo">3 Tabs: Operations View · Technical View · Comparison View</div>
+          <div class="chip-file">dashboard.py &nbsp;·&nbsp; dashboard_utils.py</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Folium Map</div>
+          <div class="chip-algo">9-layer interactive map</div>
+          <div class="chip-file">Flood · Roads · Units · Victims</div>
+        </div>
+        <div class="chip">
+          <div class="chip-name">Plotly Animation</div>
+          <div class="chip-algo">go.Frame client-side playback</div>
+          <div class="chip-file">KPIs · Timeline scrubber</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end left column -->
+
+  <!-- ══════════════════════ RIGHT COLUMN ══════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- SIMULATION LOOP -->
+    <div class="sim-loop">
+      <h3>Simulation Step Loop</h3>
+      <div class="loop-step">
+        <div class="step-num">1</div>
+        <div class="step-text">Flood Propagation<span class="step-sub">D8 min-heap spillover · 15–30 ms</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">2</div>
+        <div class="step-text">Flood Prediction<span class="step-sub">N-step lookahead · 50–150 ms</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">3</div>
+        <div class="step-text">Victim Spawning<span class="step-sub">Flood delta × pop density</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">4</div>
+        <div class="step-text">Risk Scoring<span class="step-sub">Composite R per victim · 1–2 ms</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">5</div>
+        <div class="step-text">Dispatch (Hungarian)<span class="step-sub">Optimal unit→victim assign · 2–5 ms</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">6</div>
+        <div class="step-text">A* Pathfinding<span class="step-sub">Safe route per unit · 5–10 ms</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">7</div>
+        <div class="step-text">Unit Movement<span class="step-sub">Advance along routes</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">8</div>
+        <div class="step-text">Rescue &amp; Death Checks<span class="step-sub">Health ≤ 0 → death</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">9</div>
+        <div class="step-text">Reward Calculation<span class="step-sub">MARL incentive signal</span></div>
+      </div>
+      <div class="loop-step">
+        <div class="step-num">10</div>
+        <div class="step-text">State Assembly<span class="step-sub">6-channel H×W tensor → agent obs</span></div>
+      </div>
+    </div>
+
+    <!-- STATE TENSOR -->
+    <div class="state-box">
+      <h4>6-Channel State Tensor (H × W × 6)</h4>
+      <div class="channel"><div class="ch-badge">C0</div>Current flood depth</div>
+      <div class="channel"><div class="ch-badge">C1</div>Predicted flood (t+N)</div>
+      <div class="channel"><div class="ch-badge">C2</div>Composite risk map</div>
+      <div class="channel"><div class="ch-badge">C3</div>Victim locations</div>
+      <div class="channel"><div class="ch-badge">C4</div>Unit locations</div>
+      <div class="channel"><div class="ch-badge">C5</div>Pop vulnerability</div>
+    </div>
+
+    <!-- PERFORMANCE -->
+    <div class="perf-box">
+      <h4>Performance (144×144 grid, 5–10 units)</h4>
+      <div class="perf-row"><span>Flood propagation</span><span>15–30 ms</span></div>
+      <div class="perf-row"><span>Flood prediction (N=2)</span><span>50–150 ms</span></div>
+      <div class="perf-row"><span>Hungarian dispatch</span><span>2–5 ms</span></div>
+      <div class="perf-row"><span>A* pathfinding</span><span>5–10 ms/unit</span></div>
+      <div class="perf-row"><span>Risk scoring</span><span>1–2 ms</span></div>
+      <div class="perf-row"><span>Total per step</span><span>50–100 ms</span></div>
+    </div>
+
+  </div><!-- end right column -->
+</div><!-- end main-grid -->
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch" style="background:#f9f9f9;border-style:dashed"></div>External Sources</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#f4f4f4"></div>Data Layer</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#ececec"></div>Simulation Engines</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#e4e4e4"></div>Orchestration &amp; MARL</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#dadada"></div>Presentation</div>
+</div>
+
+</body>
+</html>

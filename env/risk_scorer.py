@@ -33,11 +33,7 @@ import numpy as np
 
 
 class RiskScorer:
-    """
-    Composite victim risk combining current flood exposure,
-    predicted future exposure, time-decay urgency, and
-    population vulnerability. All terms normalised to [0, 1].
-    """
+    
 
     def __init__(self, alpha=0.3, beta=0.4, gamma=0.2, delta=0.1):
         assert abs(alpha + beta + gamma + delta - 1.0) < 1e-6
@@ -69,7 +65,7 @@ class RiskScorer:
     def batch_score(self, victims, predicted_depth,
                     current_depth, pop_grid,
                     grid_transform) -> dict:
-        """Scores all active victims. Returns {victim_id: score}."""
+       
         scores = {}
         for v in victims:
             row, col = grid_transform(v.lat, v.lon)

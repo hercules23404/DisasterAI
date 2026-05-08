@@ -1,0 +1,111 @@
+%%{
+  init: {
+    "theme": "base",
+    "themeVariables": {
+      "background":         "#020617",
+      "primaryColor":       "#0C1A2E",
+      "primaryBorderColor": "#22D3EE",
+      "primaryTextColor":   "#E2E8F0",
+      "secondaryColor":     "#052E16",
+      "secondaryBorderColor":"#4ADE80",
+      "secondaryTextColor": "#D1FAE5",
+      "tertiaryColor":      "#160C2A",
+      "tertiaryBorderColor":"#A78BFA",
+      "tertiaryTextColor":  "#DDD6FE",
+      "lineColor":          "#475569",
+      "edgeLabelBackground":"#0A0F1A",
+      "clusterBkg":         "#070C18",
+      "clusterBorder":      "#1E3A5F",
+      "titleColor":         "#F8FAFC",
+      "fontFamily":         "Fira Code, Courier New, monospace",
+      "fontSize":           "13px"
+    }
+  }
+}%%
+flowchart LR
+
+  %% ──────────────────────────────────────────────────────────────
+  %% ① DATA INGESTION
+  %% ──────────────────────────────────────────────────────────────
+  subgraph INIT ["  ① DATA INGESTION  ·  one-time startup  "]
+    direction TB
+    DEM["SRTM DEM\n30 m tiles"]
+    OSM["OpenStreetMap\nroads + buildings"]
+    POP["WorldPop\npopulation grid"]
+    GDACS["GDACS API\nlive alerts"]
+
+    DEM  --> TL["terrain_loader.py\n144×144 elevation grid\nREM + NetworkX graph"]
+    OSM  --> TL
+    OSM  --> BL["building_loader.py\ncentroids → pixels"]
+    POP  --> PL["population_loader.py\ndensity grid"]
+    GDACS --> DA["disaster_alerts.py\nGreen / Orange / Red\nseverity multiplier"]
+  end
+
+  %% ──────────────────────────────────────────────────────────────
+  %% ② SIMULATION LOOP
+  %% ──────────────────────────────────────────────────────────────
+  subgraph ENV ["  ② SIMULATION LOOP  ·  environment.py  ·  Gym step()  "]
+    direction TB
+
+    subgraph COL1 ["  propagation + prediction  "]
+      direction TB
+      FLOOD["hazard_propagation.py\nMin-Heap Priority Queue\nO(n log n)\n→ flood_depth grid"]
+      PRED["flood_predictor.py\nN-step lookahead  N=2\n→ predicted_flood grid"]
+      SPAWN["victims.py\nspawn in newly\nflooded buildings"]
+      RISK["risk_scorer.py\nflood depth + health decay\n+ isolation index\n→ composite score"]
+      DISPATCH["dispatch_engine.py\nHungarian Algorithm  O(n³)\ncost = dist+(1−risk)×1000\n→ unit→victim pairs"]
+    end
+
+    subgraph COL2 ["  routing + resolution  "]
+      direction TB
+      PATH["pathfinding.py\nA* Search\nflood-aware weights\nedge=∞ if depth>0.2 m\n→ safe road routes"]
+      MOVE["movement\nadvance units\nalong A* paths"]
+      CHECK["rescue / death check\nunit@victim → rescue\nhealth≤0 → death"]
+      REWARD["reward_function.py\n+rescued×(1+risk)\n+preemptive arrivals\n−victims×risk  −deaths×2\n−idle penalties"]
+      STATE["state tensor  H×W×6\nch0 flood depth\nch1 predicted flood\nch2 composite risk\nch3 victim locations\nch4 unit locations\nch5 pop vulnerability"]
+    end
+
+    FLOOD --> PRED --> SPAWN --> RISK --> DISPATCH
+    DISPATCH --> PATH
+    PATH --> MOVE --> CHECK --> REWARD --> STATE
+    STATE -->|"next step"| FLOOD
+  end
+
+  %% ──────────────────────────────────────────────────────────────
+  %% ③ DASHBOARD
+  %% ──────────────────────────────────────────────────────────────
+  subgraph DASH ["  ③ DASHBOARD  ·  Streamlit + Plotly + Folium  "]
+    direction TB
+    OPS["Operations View\nlive map + KPIs\nevent log"]
+    TECH["Technical View\nbaseline comparisons\nablation charts"]
+    COMP["Comparison View\nalgorithm metrics\nresponse time"]
+  end
+
+  %% ──────────────────────────────────────────────────────────────
+  %% ④ EXPERIMENTS
+  %% ──────────────────────────────────────────────────────────────
+  subgraph EXP ["  ④ EXPERIMENTS  ·  offline evaluation  "]
+    direction TB
+    BASE["baselines.py\nGreedy Myopic\nNearest-Unit\nPriority Queue\nRandom"]
+    ABL["ablation.py\nlookahead N=1…7"]
+    RL["rl_agent.py\nQMIX policy training\nStable-Baselines3"]
+  end
+
+  %% ── INTER-SECTION EDGES ───────────────────────────────────────
+  INIT  -->|"grids + graphs"| ENV
+  STATE -->|"simulation history"| DASH
+  ENV   -.->|"controlled runs"| EXP
+  EXP   -.->|"results CSV → charts"| DASH
+
+  %% ── NODE STYLES ───────────────────────────────────────────────
+  classDef dataNode   fill:#0A1628,color:#BAE6FD,stroke:#22D3EE,stroke-width:2px
+  classDef engineNode fill:#031A09,color:#BBF7D0,stroke:#4ADE80,stroke-width:2px
+  classDef dashNode   fill:#100720,color:#DDD6FE,stroke:#A78BFA,stroke-width:2px
+  classDef expNode    fill:#150E00,color:#FDE68A,stroke:#FBBF24,stroke-width:2px
+  classDef colBox     fill:#050B14,color:#94A3B8,stroke:#1E3A5F,stroke-width:1px,stroke-dasharray:4 4
+
+  class DEM,OSM,POP,GDACS,TL,BL,PL,DA dataNode
+  class FLOOD,PRED,SPAWN,RISK,DISPATCH,PATH,MOVE,CHECK,REWARD,STATE engineNode
+  class OPS,TECH,COMP dashNode
+  class BASE,ABL,RL expNode
+  class COL1,COL2 colBox

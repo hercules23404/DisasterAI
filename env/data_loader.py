@@ -52,15 +52,7 @@ def _is_cache_fresh(path):
 
 
 def _fetch_single_with_fallback(coord, api_url):
-    """
-    Fetches river discharge for one coordinate.
-    Order of operations:
-      1. Try live Open-Meteo API (with retries)
-      2. Fall back to cached response if available
-      3. Return None if both fail (caller handles coastal fallback)
-
-    Returns (data_dict, source_str) where source_str is 'live', 'cached', or 'failed'.
-    """
+    
     cache_file = _cache_path(coord)
     params = {
         "latitude": coord["latitude"],
